@@ -1,0 +1,31 @@
+score #magictest = 0 | minecraft.used:minecraft.carrot_on_a_stick
+zombie #gruntzombie = {
+    "HandItems": [{"id":"minecraft:leather_helmet"}],
+    "CustomName": "Grunt"
+} from './mobs/grunt.json'
+
+main {
+}
+
+load {
+    $say $bold $blue @a Version 1.0.0
+}
+
+events {
+
+}
+
+functions = [
+    holdClickToFire {
+        $say @a Fire!
+        'scoreboard players set @s magictest 0'
+        $start #test-timer2
+    } if {
+        @a.scoreboard.magictest >= 20
+    },
+
+    sleepShout {
+        $say @a somebody slept!
+    } $sleep
+]
+

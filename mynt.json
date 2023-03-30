@@ -1,0 +1,83 @@
+{
+    "defaults": {},
+    "packName": "apricot-dp",
+    "packDesc": "Apricot: Data-Pack demo",
+    "variables": [
+        {
+            "name": "magictest",
+            "type": "score",
+            "data": "minecraft.used:minecraft.carrot_on_a_stick"
+        },
+        {
+            "name" :"GruntZombie",
+            "type": "zombie",
+            "data": {
+                "HandItems": [{"id":"minecraft:leather_helmet"}],
+                "CustomName": "\"Grunt\"", 
+                "ArmorItems": [
+                    {
+                        "id":"minecraft:leather_helmet"
+                    }
+                ], 
+                "Health": 15, 
+                "Attributes": [
+                    {
+                        "Name": "minecraft:generic.max_health", 
+                        "Base": 15
+                    }
+                ]
+            }
+        }
+    ],
+
+    "timers": [
+        {
+            "name": "test-timer2",
+            "duration": 1,
+            "call": [
+                    "$say $blue $bold @a Summoning stick used...",
+                    "$summon creeper",
+                    "$summon #GruntZombie at @a"
+                ]
+        }
+    ],
+
+    "functions": {
+        "main": [],
+
+        "load": [
+            "$say $bold $blue @a Version 1.0.0"
+        ],
+
+        "holdClickToFire": {
+            "body": [
+                "$say @a hi",
+                "scoreboard players set @s magictest 0",
+                "$start #test-timer2"
+            ],
+
+            "conditions": [
+                {
+                    "if": {
+                        "score": {
+                            "name": "magictest",
+                            "matches": "20.."
+                        }
+                    }
+                }
+            ]
+        },
+
+        "sleepshout": {
+            "body": [
+                "$say @a somebody slept!"
+            ],
+
+            "conditions": [
+                {
+                    "event": "$sleep"
+                }
+            ]
+        }
+    }
+}

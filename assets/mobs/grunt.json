@@ -1,0 +1,19 @@
+
+{
+    "data": {
+        "HandItems": [{"id":"minecraft:leather_helmet"}],
+        "CustomName": "\"Grunt\"", 
+        "ArmorItems": [
+            {
+                "id":"minecraft:leather_helmet"
+            }
+        ], 
+        "Health": 15, 
+        "Attributes": [
+            {
+                "Name": "minecraft:generic.max_health", 
+                "Base": 15
+            }
+        ]
+    }
+}
