@@ -1,28 +1,3 @@
-# {
-#         {
-#             "name" :"GruntZombie",
-#             "type": "zombie",
-#             "data": {
-#                 "HandItems": [{}, {}],
-#                 "CustomName": "\"Grunt\"", 
-#                 "ArmorItems": [
-#                     {}, 
-#                     {}, 
-#                     {}, 
-#                     {
-#                         "Count": 1, "id":"minecraft:leather_helmet"
-#                     }
-#                 ], 
-#                 "Health": 15, 
-#                 "Attributes": [
-#                     {
-#                         "Name": "minecraft:generic.max_health", 
-#                         "Base": 15
-#                     }
-#                 ]
-#             }
-#         }
-
 def validateHands(hands):
     def _innerObjValidate(obj):
         if "Count" not in obj.keys():
