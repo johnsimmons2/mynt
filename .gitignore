@@ -1,4 +1,4 @@
-./dist
-./__pycache__/**
+dist
+__pycache__/**
 results.json
 results1.json
