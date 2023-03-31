@@ -3,7 +3,7 @@ import json
 import tokenizer as tk
 
 PACK_NAME = 'apricot-dp'
-PACK_DESC = 'Apricot: Douple Peni-tration'
+PACK_DESC = 'Apricot: Datapack Tester'
 PACK_VERSION = 6
 PACK_DIR = f'./dist/{PACK_NAME}/'
 MC_FUNC = f'{PACK_DIR}data/minecraft/tags/functions/'
