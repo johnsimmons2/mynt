@@ -1,0 +1,15 @@
+{
+    "defaults": {
+        "entity": {
+            "all": {
+                 "PersistenceRequired": true
+            },
+
+            "zombie": {
+                "HandDropChances": [0.0, 0.0],
+                "ArmorDropChances": [0.0, 0.0, 0.0, 0.0],
+                "CanPickUpLoot": true
+            }
+        }
+    }
+}

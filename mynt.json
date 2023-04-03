@@ -1,32 +1,18 @@
 {
-    "defaults": {},
     "packName": "apricot-dp",
     "packDesc": "Apricot: Data-Pack demo",
     "variables": [
         {
-            "name": "magictest",
-            "type": "score",
-            "data": "minecraft.used:minecraft.carrot_on_a_stick"
+            "name": "currency",
+            "type": "score"
         },
         {
             "name" :"GruntZombie",
-            "type": "zombie",
-            "data": {
-                "HandItems": [{"id":"minecraft:leather_helmet"}],
-                "CustomName": "\"Grunt\"", 
-                "ArmorItems": [
-                    {
-                        "id":"minecraft:leather_helmet"
-                    }
-                ], 
-                "Health": 15, 
-                "Attributes": [
-                    {
-                        "Name": "minecraft:generic.max_health", 
-                        "Base": 15
-                    }
-                ]
-            }
+            "type": "zombie"
+        },
+        {
+            "name": "magicitem",
+            "type": "item"
         }
     ],
 
@@ -49,21 +35,16 @@
             "$say $bold $blue @a Version 1.0.0"
         ],
 
-        "holdClickToFire": {
+        "magicItemTestThing": {
             "body": [
-                "$say @a hi",
-                "scoreboard players set @s magictest 0",
-                "$start #test-timer2"
-            ],
-
+                "$tag minecraft:arrow magicarrow ..0.8",
+                "$iftag magicarrow.!{inGround:1b} $particle flame",
+                "$iftag magicarrow.{inGround:1b} $summon tnt",
+                "$iftag magicarrow.{inGround:1b} kill @e[tag=magicarrow]"
+           ],
             "conditions": [
                 {
-                    "if": {
-                        "score": {
-                            "name": "magictest",
-                            "matches": "20.."
-                        }
-                    }
+                    "event": "$selected #magicitem"
                 }
             ]
         },

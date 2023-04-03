@@ -1,9 +1,12 @@
 import json
 
 MYNT_COMMANDS = [
-    "$summon",  # 0
-    "$say",     # 1
-    "$start"   # 2
+    "$summon",      # 0
+    "$say",         # 1
+    "$start",       # 2
+    "$tag",         # 3
+    "$iftag",       # 4
+    "$particle",    # 5
 ]
 
 MYNT_COMMAND_MAP = {
@@ -27,6 +30,15 @@ MYNT_COMMAND_MAP = {
     },
     MYNT_COMMANDS[2]: {
         "cmd": "scoreboard players set"
+    },
+    MYNT_COMMANDS[3]: {
+        "cmd": "tag @e"
+    },
+    MYNT_COMMANDS[4]: {
+        "cmd": "execute at @e"
+    },
+    MYNT_COMMANDS[5]: {
+        "cmd": "particle"
     }
 }
 
@@ -81,8 +93,6 @@ def _summon(command: str, ctx):
     exc = 'execute '
     if prefix != '':
         exc = exc + prefix
-    else:
-        exc = exc + 'at @a '
     exc = exc + 'run ' + base + ' ' + result
     return exc
 
@@ -117,18 +127,54 @@ def _start(command: str, ctx):
     result = result + base + f' {json.loads(cmd[1])["cache"]} {json.loads(cmd[1])["name"]} 1'
     return result
     
+def _tag(call, ctx):
+    base = MYNT_COMMAND_MAP['$tag']['cmd']
+    cmd = call.split()
+    result = base + f'[type={cmd[1]},distance={cmd[3]}] add {cmd[2]}'
+    return result
+
+def _particle(call, ctx):
+    base = MYNT_COMMAND_MAP['$particle']['cmd']
+    cmd = call.split()
+    result = base + f' {cmd[1]} ~ ~ ~ 0 0 0 0.05 5 force @a'
+    return result
+
+# $iftag [type]{nbt} [callout]
+def _iftag(call, ctx):
+    base = MYNT_COMMAND_MAP['$iftag']['cmd']
+    cmd = str(call).split(maxsplit=2)
+    nbt = ''
+    if '.' in cmd[1]:
+        nbt = cmd[1].split('.')[1]
+        cmd[1] = cmd[1].split('.')[0]
+    result = base + f'[tag={cmd[1]}'
+    if nbt != '':
+        result = result + f',nbt={nbt}'
+    result = result + f'] run '
+    callout = translateToMC(cmd[2])
+    print(callout)
+    return result + callout
 
 def translateToMC(call: str, ctx = None):
     command = call.split()
     mc = ''
-    if command[0] in MYNT_COMMAND_MAP.keys():
-        cmd = command[0]
-        if cmd == MYNT_COMMANDS[0]:
-            mc = _summon(call, ctx)
-        elif cmd == MYNT_COMMANDS[1]:
-            mc = _say(call)
-        elif cmd == MYNT_COMMANDS[2]:
-            mc = _start(call, ctx)
-        return mc
+    if command[0][0] == '$':
+        if command[0] in MYNT_COMMAND_MAP.keys():
+            cmd = command[0]
+            if cmd == MYNT_COMMANDS[0]:
+                mc = _summon(call, ctx)
+            elif cmd == MYNT_COMMANDS[1]:
+                mc = _say(call)
+            elif cmd == MYNT_COMMANDS[2]:
+                mc = _start(call, ctx)
+            elif cmd == MYNT_COMMANDS[3]:
+                mc = _tag(call, ctx)
+            elif cmd == MYNT_COMMANDS[4]:
+                mc = _iftag(call, ctx)
+            elif cmd == MYNT_COMMANDS[5]:
+                mc = _particle(call, ctx)
+            return mc
+        else:
+            raise SyntaxError(f'Invalid Mynt command syntax. {command}')
     else:
-        raise SyntaxError(f'Invalid Mynt command syntax. {command}')
+        return call

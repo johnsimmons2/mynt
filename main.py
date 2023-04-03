@@ -1,5 +1,4 @@
-import fileutil as ft
-from mynter import Mynt
+import mynt as my
 
 # TODO:
 #   - Global timer progress bars
@@ -18,9 +17,8 @@ from mynter import Mynt
 
 
 def main():
-    mynt = Mynt(ft.loadMyntFile())
-    m = ft.MyntFile('./apricot.mynt')
-    m.validate()
+    my.lg.Logger.config_set_handler(my.lg.FormattedLogHandler())
+    mynt = my.Mynt(my.ft.loadMyntFile())
     mynt.compile()
 
 

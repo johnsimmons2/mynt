@@ -1,4 +1,4 @@
-from fileutil import PackFile, PACK_FUNC, PACK_NAME
+from mynt.fileutil import PackFile, PACK_FUNC, PACK_NAME
 
 executeatall = 'execute at @a as @p'
 
@@ -6,12 +6,26 @@ def exeFunction(funcName):
     return f'function {funcName}'
 
 def ifScore(func, score, matches):
-    return f'execute at @a as @p if score @p {score} matches {matches} run function {func}'
+    return f'execute at @a as @p if score @p {score} matches {matches} run {exeFunction(func)}'
+
+def ifEntityTagged(func, entityType, tag):
+    return f'execute at @e[type={entityType},tag={tag}] run {exeFunction(func)}'
+
+# $iftag
+def ifItemSelected(func, tag):
+    return f'execute at @a[nbt={{SelectedItem:{{tag:{{{tag}:1b}}}}}}] positioned ~ ~1 ~ run {func}'
+
+def particle(type, pos='~ ~ ~', delta='0 0 0', speed=0.05, count=5):
+    return f'particle {type} {pos} {delta} {speed} {count} force @a'
+
+# $tag
+def tag(type, tag, range):
+    return f'tag @e[type={type},distance={range}] add {tag}'
 
 def addObjective(score, type="dummy"):
     return f"scoreboard objectives add {score} {type}"
 
-def setScore(score, player, amt=0):
+def setScore(score, player='@a', amt=0):
     return f"scoreboard players set {player} {score} {amt}"
 
 def addScore(score, player, amt=1):

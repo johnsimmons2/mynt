@@ -1,0 +1,17 @@
+{
+    "name": "magicitem",
+    "type": "item",
+    "item": "minecraft:bow",
+    "data": {
+        "display": {
+            "Name": "Frizz Bow", 
+            "bold": true, 
+            "color": "red"
+        }
+    },
+    "score": {
+        "base": 0,
+        "max": 1,
+        "cooldown": 5
+    }
+}

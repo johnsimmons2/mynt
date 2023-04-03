@@ -1,5 +1,7 @@
 
 {
+    "name": "gruntzombie",
+    "type": "zombie",
     "data": {
         "HandItems": [{"id":"minecraft:leather_helmet"}],
         "CustomName": "\"Grunt\"", 

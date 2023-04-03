@@ -7,7 +7,6 @@ def validateHands(hands):
     rhand = {}
     items = hands["HandItems"]
     for i, m in enumerate(items):
-        print(m)
         if i == 0:
             lhand = _innerObjValidate(m)
         elif i == 1:

@@ -1,15 +1,21 @@
 import os
 import json
-import tokenizer as tk
+import mynt.tokenizer as tk
+import mynt.logging as lg
+
+lgl = lg.Logger.log
+lgll = lg.LogLevel
 
 PACK_NAME = 'apricot-dp'
-PACK_DESC = 'Apricot: Datapack Tester'
+PACK_DESC = 'Apricot: Data-Pack Demo!'
 PACK_VERSION = 6
+PACK_ASSETS = './assets/'
 PACK_DIR = f'./dist/{PACK_NAME}/'
 MC_FUNC = f'{PACK_DIR}data/minecraft/tags/functions/'
 PACK_FUNC = f'{PACK_DIR}data/{PACK_NAME}/functions/'
+PACK_ADVC = f'{PACK_DIR}data/{PACK_NAME}/advancements/'
 
-MYNT_BASE_TAGS = ["functions", "defaults", "variables", "timers", "packName", "packDesc"]
+MYNT_BASE_TAGS = ["functions", "variables", "timers", "packName", "packDesc"]
 
 FILE_EXC = 'Cant get file'
 
@@ -119,17 +125,27 @@ def function(funcName):
     f.empty()
     return f
 
-def op(funcName):
-    return PackFile(PACK_FUNC + funcName + '.mcfunction')
+def op(funcName, ext='.mcfunction', type='function'):
+    directory = ''
+    match type:
+        case 'function': 
+            directory = PACK_FUNC
+        case 'advancement': 
+            directory = PACK_ADVC
+            ext='.json'
+        case _: print('wtf')
+    return PackFile(directory + funcName + ext)
 
 def loadMyntFile() -> PackFile:
-    mynt = PackFile('./mynt.json')
+    global PACK_NAME, PACK_DESC
+    mynt = PackFile(os.path.abspath('./mynt.json'))
+    
     myntf = mynt.get()
     if myntf == None:
         myntJson = {
             "defaults": {},
-            "packName": PACK_NAME,
-            "packDesc": PACK_DESC,
+            "packName": 'NONE',
+            "packDesc": 'NONE',
             "variables": [],
             "functions": [],
             "timers": []
@@ -139,6 +155,38 @@ def loadMyntFile() -> PackFile:
         if not _checkMynt(myntf):
             raise SyntaxError("The mynt.json supplied was not formatted correctly.")
     return mynt
+
+def openJSON(path = ''):
+    if path != '':
+        if not str(path).endswith('.json'):
+            path = path + '.json'
+        path = os.path.abspath(PACK_ASSETS + path)
+        try:
+            with open(path, 'r') as f:
+                return json.loads(f.read())
+        except:
+            return None
+    else:
+        path = os.path.abspath(PACK_ASSETS)
+        files = [f for f in os.listdir(path) 
+                    if os.path.isfile(os.path.join(PACK_ASSETS, f)) and str(f).endswith('.json')]
+        validFiles = []
+        for f in files:
+            res = {}
+            with open(os.path.join(PACK_ASSETS, f), 'r') as fo:
+                try:
+                    res = json.loads(fo.read())
+                except:
+                    pass
+            if "defaults" in res:
+                validFiles.append(f)
+            else:
+                for k in ["type", "name", "data"]:
+                    if k not in res:
+                        lgl(lgll.ERROR, f'Could not load mynt data file [{f}]: Missing required tags.')
+                else:
+                    validFiles.append(f)
+        return validFiles
 
 
 tick: PackFile | None = None
@@ -171,4 +219,6 @@ def setupPack():
     load = PackFile(PACK_FUNC + 'load.mcfunction')
     tick.empty()
     load.empty()
+
+    os.makedirs(PACK_ADVC, exist_ok=True)
 
