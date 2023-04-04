@@ -2,6 +2,8 @@ import os
 import json
 import mynt.tokenizer as tk
 import mynt.logging as lg
+from shutil import rmtree
+from distutils.dir_util import copy_tree
 
 lgl = lg.Logger.log
 lgll = lg.LogLevel
@@ -14,6 +16,8 @@ PACK_DIR = f'./dist/{PACK_NAME}/'
 MC_FUNC = f'{PACK_DIR}data/minecraft/tags/functions/'
 PACK_FUNC = f'{PACK_DIR}data/{PACK_NAME}/functions/'
 PACK_ADVC = f'{PACK_DIR}data/{PACK_NAME}/advancements/'
+PACK_COND = f'{PACK_DIR}data/{PACK_NAME}/functions/cond/'
+PACK_TIMER = f'{PACK_DIR}data/{PACK_NAME}/functions/timers/'
 
 MYNT_BASE_TAGS = ["functions", "variables", "timers", "packName", "packDesc"]
 
@@ -33,13 +37,24 @@ class PackFile:
         else:
             self.exists = os.path.exists(self.file)
 
+
+    # Write a function that returns the parent directory + the filename and extension. For example, if the file is "C:/test/demo/fake/thisone/test.txt" the result would be "thisone/test.txt"
+    def filename(self):
+        parent_dir, filename = os.path.split(self.file)
+        return str(os.path.join(os.path.basename(parent_dir), filename)).replace('\\', '/')
+    
+    def functionName(self):
+        n = self.filename().split('.')[0]
+        return f'{PACK_NAME}:{n}'
+
     def empty(self):
         self.set('')
     
     def get(self):
         try:
+            print(self.file)
             with open(self.file, 'r') as f:
-                return json.loads(f.read())
+                return f.read()
         except Exception as e:
             print(FILE_EXC + f': {e}')
     
@@ -133,6 +148,10 @@ def op(funcName, ext='.mcfunction', type='function'):
         case 'advancement': 
             directory = PACK_ADVC
             ext='.json'
+        case 'condition':
+            directory = PACK_COND
+        case 'timer':
+            directory = PACK_TIMER
         case _: print('wtf')
     return PackFile(directory + funcName + ext)
 
@@ -140,7 +159,7 @@ def loadMyntFile() -> PackFile:
     global PACK_NAME, PACK_DESC
     mynt = PackFile(os.path.abspath('./mynt.json'))
     
-    myntf = mynt.get()
+    myntf = json.loads(mynt.get())
     if myntf == None:
         myntJson = {
             "defaults": {},
@@ -181,7 +200,7 @@ def openJSON(path = ''):
             if "defaults" in res:
                 validFiles.append(f)
             else:
-                for k in ["type", "name", "data"]:
+                for k in ["type", "name"]:
                     if k not in res:
                         lgl(lgll.ERROR, f'Could not load mynt data file [{f}]: Missing required tags.')
                 else:
@@ -191,6 +210,14 @@ def openJSON(path = ''):
 
 tick: PackFile | None = None
 load: PackFile | None = None
+
+def copyOutputTo(dist):
+    path = dist + '/' + PACK_NAME
+    if os.path.exists(path):
+        rmtree(path)
+        
+    copy_tree(PACK_DIR, path)
+
 
 def setupPack():
     global tick, load

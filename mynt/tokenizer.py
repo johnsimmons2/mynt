@@ -38,7 +38,6 @@ def tokenize_mfile_to_json(mfile):
                 for regex in tokens["CALLOUT"]:
                     match = re.match(re.compile(regex), line)
                     if match:
-                        print(match)
                         line_tokens.append(("CALLOUT", match.group()))
                         line = line[match.end():]
                         break
@@ -125,7 +124,6 @@ def first_pass(file):
                         elif state > 0:
                             if q[1] == "$":
                                 cmd = q[1] + ' '.join(list(map((lambda x : x[1]), t[1:])))
-                                print(cmd)
                                 if not mnt["functions"][f"{funcName}"]["body"]:
                                     mnt["functions"][f"{funcName}"]["body"] = []
                                 mnt["functions"][f"{funcName}"]["body"] = mnt["functions"][f"{funcName}"]["body"].append(cmd)

@@ -1,9 +1,13 @@
 {
+    "dist": [
+        "C:\\Users\\jsim2\\AppData\\Roaming\\.minecraft\\saves\\Datapack testing\\datapacks",
+        "C:\\Users\\jsim2\\AppData\\Roaming\\.minecraft\\saves\\Zelda Map\\datapacks"
+    ],
     "packName": "apricot-dp",
     "packDesc": "Apricot: Data-Pack demo",
     "variables": [
         {
-            "name": "currency",
+            "name": "rupees",
             "type": "score"
         },
         {
@@ -13,27 +17,71 @@
         {
             "name": "magicitem",
             "type": "item"
+        },
+        {
+            "name": "sneaktime",
+            "type": "score",
+            "data": "minecraft.custom:minecraft.sneak_time"
+        },
+        {
+            "name": "bombs",
+            "type": "score"
+        },
+        {
+            "name": "canbomb",
+            "type": "score"
         }
     ],
 
     "timers": [
         {
-            "name": "test-timer2",
-            "duration": 1,
+            "name": "bombsummon",
+            "duration": 3,
             "call": [
-                    "$say $blue $bold @a Summoning stick used...",
-                    "$summon creeper",
-                    "$summon #GruntZombie at @a"
-                ]
+                "scoreboard players set @s sneaktime 0",
+                "execute at @e[tag=bomb,type=minecraft:armor_stand] run summon tnt ~ ~ ~",
+                "kill @e[tag=bomb]"
+            ]
+        },
+        {
+            "name": "resetbombs",
+            "duration": 10,
+            "call": [
+                "scoreboard players set @s sneaktime 0",
+                "scoreboard players set @s canbomb 1"
+            ]
         }
     ],
 
     "functions": {
-        "main": [],
+        "main": [
+            "execute as @a if score @s sneaktime matches 2.. run scoreboard players remove @s sneaktime 2",
+            "execute as @a[scores={bombs=1..}] run scoreboard players set @s canbomb 0"
+        ],
 
         "load": [
-            "$say $bold $blue @a Version 1.0.0"
+            "team add aqua",
+            "team modify aqua color aqua",
+            "scoreboard objectives setdisplay sidebar.team.aqua bombs",
+            "$say $bold $blue @a Version 1.0.1"
         ],
+
+        "bombhelper": {
+            "body": [
+                "$if score canbomb matches 1..",
+                "$then $particle flame",
+                "$then $mark bomb",
+                "$then $start #bombSummon",
+                "$then playsound minecraft:entity.creeper.primed ambient @a ~ ~ ~ 1 0.5",
+                "$then execute as @e[tag=bomb] run particle minecraft:campfire_signal_smoke ~ ~ ~ 0 0 0 0.05 10",
+                "$then execute as @e[tag=bomb] run particle minecraft:campfire_cosy_smoke ~ ~ ~ 0 -1 0 0.01 100",
+                "$then scoreboard players remove @s bombs 1",
+                "$then scoreboard players set @s sneaktime 0",
+                "$then scoreboard players set @s canbomb 0",
+                "$then $start #resetbombs"
+            ],
+            "conditions": []
+        },
 
         "magicItemTestThing": {
             "body": [
@@ -45,6 +93,19 @@
             "conditions": [
                 {
                     "event": "$selected #magicitem"
+                }
+            ]
+        },
+
+        "holdingTNT": {
+            "body": [
+                "execute as @a[scores={canbomb=1..}] run scoreboard players add @s sneaktime 2",
+                "$if score sneaktime matches 30..",
+                "$then function #bombhelper"
+            ],
+            "conditions": [
+                {
+                    "event": "$offhand minecraft:tnt"
                 }
             ]
         },

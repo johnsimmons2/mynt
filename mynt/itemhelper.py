@@ -9,12 +9,12 @@ def makeValidItem(item):
        lgl(lgll.WARN, f'Missing required tag \"item\".')
        return None 
     
-    if "data" not in item:
+    if "tag" not in item:
         lgl(lgll.ERROR, f'No NBT Data supplied in \"data\" tag. Cannot validate item.')
         return None
     # Assume valid for now, error on user's end...
     id = item["item"]
-    data = item["data"]
+    data = item["tag"]
 
     # TODO: Add lore or grab textures form assets eventually with optifine.
     return item

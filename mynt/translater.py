@@ -1,4 +1,6 @@
 import json
+import mynt.funchelper as fh
+import mynt.fileutil as ft
 
 MYNT_COMMANDS = [
     "$summon",      # 0
@@ -7,6 +9,9 @@ MYNT_COMMANDS = [
     "$tag",         # 3
     "$iftag",       # 4
     "$particle",    # 5
+    "$if",          # 6
+    "$then",        # 7
+    "$mark",         # 8
 ]
 
 MYNT_COMMAND_MAP = {
@@ -39,6 +44,15 @@ MYNT_COMMAND_MAP = {
     },
     MYNT_COMMANDS[5]: {
         "cmd": "particle"
+    },
+    MYNT_COMMANDS[6]: {
+        "cmd": "execute as @a if"
+    },
+    MYNT_COMMANDS[7]: {
+        "cmd": ""
+    },
+    MYNT_COMMANDS[8]: {
+        "cmd": "summon minecraft:armor_stand ~ ~ ~ {ShowArms:1b,Invisible:1b,Marker:1b,Tags:["
     }
 }
 
@@ -68,6 +82,43 @@ def _condition(command: str, ctx):
 
 def _using(command: str, ctx):
     base = MYNT_COMMAND_MAP['$using']['cmd']
+
+def _then(command: str, ctx):
+    cmd = command.split(maxsplit=1)
+    callout = translateToMC(cmd[1])
+    fil = ft.op(ctx["metadata"], type='condition')
+    fil.write(callout)
+    return None
+
+# $if <score|selected|offhand|hastag|nasnbt|near> [#]<var>
+# Stores the result in a scoreboard. 
+def _if(command: str, ctx):
+    base = MYNT_COMMAND_MAP['$if']['cmd']
+    cmd = command.split(maxsplit=3)
+    req = cmd[1]
+    result = ''
+    if "score" in req:
+            # if score was supplied in the context it should have a max value to set the condition from.
+        if "score" in ctx:
+            if "max" in ctx:
+                result = f'{base} {req} @p {cmd[2]} matches {ctx["score"]["max"]}..'    
+        
+            # Create the callout for the predicate
+        callout = ft.op(ctx["metadata"], type='condition')
+        callout.empty()
+        print(callout.functionName())
+        result = f'{base} {req} @s {cmd[2]} {cmd[3]} at @s as @s run function {callout.functionName()}'
+    else:
+        raise SyntaxError("Unknown predicate in if statement")
+    return result + ''
+
+def _mark(command: str, ctx):
+    cmd = command.split()
+    if len(cmd) == 3:
+        print(cmd[2])
+    base = MYNT_COMMAND_MAP['$mark']['cmd']
+    result = base + f'{cmd[1]}]}}'
+    return result
 
 def _summon(command: str, ctx):
     base = MYNT_COMMAND_MAP['$summon']['cmd']
@@ -124,7 +175,7 @@ def _start(command: str, ctx):
     cmd = command.split(maxsplit=1)
     if len(cmd) != 2:
         raise SyntaxError('Start command has only one parameter')
-    result = result + base + f' {json.loads(cmd[1])["cache"]} {json.loads(cmd[1])["name"]} 1'
+    result = result + base + f' @s {cmd[1].lower().strip("#")}_c 1'
     return result
     
 def _tag(call, ctx):
@@ -152,7 +203,6 @@ def _iftag(call, ctx):
         result = result + f',nbt={nbt}'
     result = result + f'] run '
     callout = translateToMC(cmd[2])
-    print(callout)
     return result + callout
 
 def translateToMC(call: str, ctx = None):
@@ -173,6 +223,12 @@ def translateToMC(call: str, ctx = None):
                 mc = _iftag(call, ctx)
             elif cmd == MYNT_COMMANDS[5]:
                 mc = _particle(call, ctx)
+            elif cmd == MYNT_COMMANDS[6]:
+                mc = _if(call, ctx)
+            elif cmd == MYNT_COMMANDS[7]:
+                mc = _then(call, ctx)
+            elif cmd == MYNT_COMMANDS[8]:
+                mc = _mark(call, ctx)
             return mc
         else:
             raise SyntaxError(f'Invalid Mynt command syntax. {command}')

@@ -19,7 +19,7 @@ EVENT_FILE = 'evt'
 class Mynt:
     def __init__(self, myntFile: ft.PackFile):
         self.myntFile = myntFile
-        self.json = myntFile.get()
+        self.json = json.loads(myntFile.get())
         self.name = ''
         self.desc = ''
         self.functions = []
@@ -83,7 +83,7 @@ class Mynt:
     def _checkTags(self, tags, js):
         for t in tags:
             if not t in js:
-                raise SyntaxError(SYNTAX_ERROR + f', {js}')
+                raise SyntaxError(SYNTAX_ERROR + f', {js}, {t}')
 
     def _insertDefaults(self, js: dict, typ):
         tagsToAdd = {
@@ -100,42 +100,60 @@ class Mynt:
                 js = js | tagsToAdd["defaults"]["entity"][typ]
         return js
 
-    def _getVarBy(self, call: str, tag='#'):
+    def _getVarBy(self, call: str, tag='#', isFunc=False):
         try:
-            vari = call.index('#')
-            vars = call[vari+1:].split()
-            var = vars[0]
-            varc = None
-            for v in self.variables_c:
-                if v["name"] == var:
-                    varc = v
-                    break
-            
-            return varc, call[0:vari]
+            if isFunc == False:
+                vari = call.index('#')
+                vars = call[vari+1:].split()
+                var = vars[0]
+                varc = None
+                for v in self.variables_c:
+                    if v["name"] == var:
+                        varc = v
+                        break
+
+                return varc, f'{call[0:vari]}{var}{call[vari+len(var)+1:]}'
+            else:
+                vari = call.index('#')
+                vars = call[vari+1:].split()
+                var = vars[0]
+                varc = None
+                for v in self.variables_c:
+                    if v["name"] == var:
+                        varc = v
+                        break
+
+                return varc, f'{call[0:vari]}{self.name}:{varc["raw"]}{call[vari+len(var)+1:]}'
         except Exception as e:
             return None, None
 
-    def _insertVariables(self, call: str):
+    def _insertVariables(self, call: str, funcName=None):
         try:
-            cmd = call.split()
-            varc, commandHalf = self._getVarBy(call)
+            ft = False
+            if "function" in call:
+                ft = True
+            varc, commandHalf = self._getVarBy(call, isFunc=ft)
             if varc and commandHalf:
-                nbt = self._insertDefaults(varc["raw"], varc["type"])
-                result = commandHalf + json.dumps(nbt) + ' ' + ' '.join(cmd[2:])
-                return result, varc
+                varc["metadata"] = funcName
+                return commandHalf, varc
             else:
-                return call, None
+                return call, {"metadata": funcName}
         except Exception as e:
             t, v, tb = sys.exc_info()
             lgl(lgll.ERROR, f'was no variable to insert {e}. [{t}, {v}, {tb}, {type(call)}]')
             return call, None
     
-    def _processCall(self, call):
-        if call[0] == '$':
-            cmd, var = self._insertVariables(call)
-            return tl.translateToMC(cmd, var)
+    def _processCall(self, call, funcName=None):
+        if call == '' or len(call) < 1:
+            lgl(lgll.ERROR, f'Tried to process null call.')
+            return call
         else:
-            return self._insertVariables(call)[0]
+            if call[0] == '$':
+                cmd, var = self._insertVariables(call, funcName)
+                print(cmd, var)
+                return tl.translateToMC(cmd, var)
+            else:
+                return self._insertVariables(call, funcName)[0]
 
     def _getCall(self, call):
         callStack = []
@@ -145,8 +163,10 @@ class Mynt:
                     # multi-call
                     for c in call:
                         callStack.append(self._processCall(c))
+                else:
+                    callStack.append(self._processCall(call))
             else:
-                self._processCall(call)
+                callStack.append(self._processCall(call))
         return callStack
 
     def _validateData(self, required, data):
@@ -159,11 +179,11 @@ class Mynt:
         lgl(lgll.DEBUG, f'Trying to init func... {func}')
         if 'main' in func.keys():
             for call in func['main']:
-                pc = self._processCall(call)
+                pc = self._processCall(call, 'main')
                 ft.tick.write(pc)
         elif 'load' in func.keys():
             for call in func['load']:
-                pc = self._processCall(call)
+                pc = self._processCall(call, 'load')
                 ft.load.setRaw(pc)
         else:
             funcId = f'{len(self.functions_c)}_func'
@@ -181,12 +201,13 @@ class Mynt:
             fc = ft.function(f'generated/{funcId}')
             cstack = []
             for b in f["body"]:
-                boody = self._processCall(b)
+                boody = self._processCall(b, funcId)
                 cstack.append(boody)
                 fc.write(boody)
 
             # If we want to attach to an event
             for condition in f["conditions"]:
+                hastag = False
                 if "event" in condition.keys():
                     ev = condition["event"]
 
@@ -203,7 +224,17 @@ class Mynt:
                             lgl(lgll.ERROR, f'Unknown implicit event: {ev}')
                         elif len(cmd) == 2:
                             c = cmd[0]
-                            a = json.loads(self._insertVariables(ev)[0].split(' ', maxsplit=1)[1])
+                            
+                            chalf, var = self._insertVariables(ev,funcId)
+                            if not "raw" in var:
+                                a = {
+                                    "name": fName,
+                                    "item": cmd[1]
+                                }
+                            else:
+                                # Load the variable from file
+                                a = var['raw']
+                                hastag = "tag" in a
 
                             # Messy but works...
                             if c == "$use":
@@ -232,7 +263,15 @@ class Mynt:
                                 fc.write(f'advancement revoke @s only {self.name}:{fName}')
 
                             elif c == "$selected":
-                                ft.tick.write(fh.ifItemSelected(fh.exeFunction(f'{self.name}:generated/{funcId}'), a["name"]))
+                                if hastag:
+                                    ft.tick.write(fh.getPlayersBySelected(fh.exeFunction(f'{self.name}:generated/{funcId}'), a["item"], a["name"]))
+                                else:
+                                    ft.tick.write(fh.getPlayersBySelected(fh.exeFunction(f'{self.name}:generated/{funcId}'), a["item"]))
+                            elif c == "$offhand":
+                                if hastag:
+                                    ft.tick.write(fh.getPlayersByOffhand(fh.exeFunction(f'{self.name}:generated/{funcId}'), a["item"], a["name"]))
+                                else:
+                                    ft.tick.write(fh.getPlayersByOffhand(fh.exeFunction(f'{self.name}:generated/{funcId}'), a["item"]))
                 elif "if" in condition.keys():
                     ev = condition["if"]
                     if "score" in ev.keys():
@@ -241,14 +280,28 @@ class Mynt:
                         # Make sure the score is loaded in the load.mcfunction if it is not referenced anywhere else.
                         self._validateAndAddScore(ev["score"]["name"])
                         ft.tick.write(fh.ifScore(f"{self.name}:generated/{funcId}", ev["score"]["name"], ev["score"]["matches"]))
+            self.variables_c.append(self._variable_c(len(self.functions_c), f["name"], "function", funcId, fc.filename().split('.')[0]))
             self.functions_c.append(f)
 
-    def _validateAndAddScore(self, score):
+    def _validateAndAddScore(self, score, js=None, type='dummy'):
         if score not in self.scores:
             self.scores.append(score)
-            ft.load.write(fh.addObjective(score))
+            ft.load.write(fh.removeObjective(score))
+            ft.load.write(fh.addObjective(score, type))
             ft.load.write(fh.setScore(score, '@a'))
-        
+        # Optional parameter to create a function and trigger based off the scoreboard value.
+        if js:
+            if "name" not in js:
+                raise SyntaxError("Missing 'Name' tag in json.")
+            mif = ft.function(f'generated/{len(self.functions_c)}_func')
+            mif.empty()
+            mif.write(fh.setScore(js["name"], '@s'))
+            self.functions_c.append(self._function_c(len(self.functions_c), js["name"]))
+
+            if "score" in js:
+                # Create a trigger based on the score tag
+                ft.tick.write(fh.ifScore(f"{self.name}:generated/{len(self.functions_c)}_func", js["name"], f'{js["score"]["max"]}..'))
+
     ### Variables ###
     # Valid tags:
     #   name: name of variable
@@ -269,7 +322,10 @@ class Mynt:
             else:
                 js = ft.openJSON(f'{str(var["name"]).lower()}')
                 if js:
-                    var["data"] = js["data"]
+                    if "data" in js:
+                        var["tag"] = js["data"]
+                    elif "tag" in js:
+                        var["tag"] = js["tag"]
                     if var["type"] == "item" and "item" in js:
                         var["item"] = js["item"]
 
@@ -279,25 +335,15 @@ class Mynt:
                             # Add the objective and add to all players
 
                             # TODO: Need to add to when players join game if they have any objectives
-                            self._validateAndAddScore(js["name"])
-
-                            funcId = len(self.functions_c)
-                            mif = ft.function(f'generated/{funcId}_func')
-                            mif.empty()
-                            mif.write(fh.setScore(js["name"], '@s'))
-                            self.functions_c.append(self._function_c(funcId, js["name"]))
-
-                            # Create a trigger based on the score tag
-                            ft.tick.write(fh.ifScore(f"{self.name}:generated/{funcId}", js["name"], f'..{js["score"]["max"]}'))
+                            self._validateAndAddScore(js["name"], js)
                 else:
                     lgl(lgll.ERROR, 'Variable has no matching file in the assets directory.')
 
-        
         if var["type"] in ["zombie", "entity"]:
-            varData = eh.makeValidEntity(var["data"])
+            varData = eh.makeValidEntity(var["tag"])
         elif var["type"] == "score":
-            varData = fh.addObjective(var["name"], var["data"])
-            self._validateAndAddScore(var["name"])
+            varData = var["data"]
+            self._validateAndAddScore(var["name"], type=var["data"])
         elif var["type"] == "item":
             varData = ih.makeValidItem(var)
         else:
@@ -347,30 +393,30 @@ class Mynt:
         timerId = len(self.timer_c)
         timerName = js["name"]
         systemName = f"{self.name}"
-        systemCache = f"{self.name}-c"
         duration = js["duration"] * 24
         call = self._getCall(js["call"])
+        print(call)
         # TODO: Check if call is mc command or not
 
         ft.load.write(fh.addObjective(timerName))
-        ft.load.write(fh.setScore(timerName, systemName, 0))
-        ft.load.write(fh.setScore(timerName, systemCache, 0))
+        ft.load.write(fh.addObjective(timerName+'_c'))
+        ft.load.write(fh.setScore(timerName))
+        ft.load.write(fh.setScore(timerName+'_c'))
         
-        # Check if the timer is on in the tick function
-        ft.tick.write(fh.glblIfScore(f"{systemName}:timers/{timerName}", systemCache, timerName))
-
         # Create timer function in the timer directory
         tf = ft.function(f"timers/{timerName}")
-        tf.write(fh.addScore(timerName, systemName))
+        tf.write(fh.addScore(timerName, '@s'))
+
+        # Check if the timer is on in the tick function
+        ft.tick.write(fh.ifScore(f"{systemName}:timers/{timerName}", timerName+'_c', f'1..'))
         
         for c in call:
-            tf.write(fh.glblIfScore(c, systemCache, timerName, '2..'))
+            tf.write(fh.ifScore(c, timerName, f'{duration}..'))
 
-        tfFuncs = [fh.setScore(timerName, systemName), fh.setScore(timerName, systemCache)]
-        tf.write(fh.glblIfScore(tfFuncs, systemCache, timerName, '2..'))
+        tfFuncs = [fh.setScore(timerName+'_c', '@s'), fh.setScore(timerName, '@s')]
 
         # Check if the timer is done
-        tf.write(fh.glblIfScore(fh.setScore(timerName, systemCache, 2), systemName, timerName, f"{duration}.."))
+        tf.write(fh.ifScore(tfFuncs, timerName, f"{duration}.."))
 
         self.timer_c.append(self._timer_c(timerId, timerName, duration))
         varData = self._timer_c(timerId, timerName, duration)
@@ -432,3 +478,19 @@ class Mynt:
         self.debug_printAll(self.functions_c, lgll.DEBUG)
         lgl(lgll.SUCCESS, 'Mynt Defaults Loaded')
         self.debug_printAll(self.defaults, lgll.DEBUG)
+
+        # If optional tag "dist" is in the json
+        if "dist" in self.json:
+            dirs = []
+            dst = self.json["dist"]
+            if isinstance(dst, (list, tuple)):
+                for d in dst:
+                    dirs.append(d)
+            else:
+                dirs = [dst]
+
+            for d in dirs:
+                try:
+                    ft.copyOutputTo(d)
+                except Exception as e:
+                    lgl(lgll.WARN, f'Failed to copy pack into {d}. {e}')

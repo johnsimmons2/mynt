@@ -1,19 +1,42 @@
 from mynt.fileutil import PackFile, PACK_FUNC, PACK_NAME
+import json
 
-executeatall = 'execute at @a as @p'
+executeatall = 'execute at @a as @s'
+
+def getPlayersByOffhand(func, itemId, tag=None):
+    result = f'execute at @a as @a[nbt={{Inventory:[{{id:\"{itemId}\",Slot:-106b'
+    if tag:
+        result = result + f',tag:{{{tag}}}}}}}]'
+    else:
+        result = result + '}]}]'
+    return result + f' run {_getFunctionOrCmd(func)}'
+
+def getPlayersBySelected(func, itemId, tag=None):
+    result = f'execute at @a as @a[nbt={{SelectedItem:{{id:\"{itemId}\"'
+    if tag:
+        result = result + f',tag:{{{json.dumps(tag)}:1b}}}}'
+    else:
+        result = result + '}'
+    return result + f'}}] run {_getFunctionOrCmd(func)}'
 
 def exeFunction(funcName):
     return f'function {funcName}'
 
 def ifScore(func, score, matches):
-    return f'execute at @a as @p if score @p {score} matches {matches} run {exeFunction(func)}'
+    result = ''
+    if isinstance(func, (tuple, list)):
+        for f in func:
+            result = result + ifScore(f, score, matches) + '\n'
+        return result
+    else:
+        return f"execute as @a if score @s {score} matches {matches} at @s run {_getFunctionOrCmd(func)}"
 
 def ifEntityTagged(func, entityType, tag):
-    return f'execute at @e[type={entityType},tag={tag}] run {exeFunction(func)}'
+    return f'execute at @e[type={entityType},tag={tag}] run {_getFunctionOrCmd(func)}'
 
 # $iftag
-def ifItemSelected(func, tag):
-    return f'execute at @a[nbt={{SelectedItem:{{tag:{{{tag}:1b}}}}}}] positioned ~ ~1 ~ run {func}'
+def ifItemByTagSelected(func, tag):
+    return f'execute at @a[nbt={{SelectedItem:{{tag:{{{tag}:1b}}}}}}] positioned ~ ~1 ~ run {_getFunctionOrCmd(func)}'
 
 def particle(type, pos='~ ~ ~', delta='0 0 0', speed=0.05, count=5):
     return f'particle {type} {pos} {delta} {speed} {count} force @a'
@@ -21,6 +44,9 @@ def particle(type, pos='~ ~ ~', delta='0 0 0', speed=0.05, count=5):
 # $tag
 def tag(type, tag, range):
     return f'tag @e[type={type},distance={range}] add {tag}'
+
+def removeObjective(score):
+    return f"scoreboard objectives remove {score}"
 
 def addObjective(score, type="dummy"):
     return f"scoreboard objectives add {score} {type}"
