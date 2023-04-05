@@ -77,7 +77,14 @@ MYNT_SAY_PARAMS = {
     }
 }
 
-def _condition(command: str, ctx):
+#   mynt.json is formatted into functions with code bodies and conditions
+#   that is passed to the translater along with all mynt code
+
+
+def _handleFunction(func, ctx):
+    pass
+
+def _handleCondition(command: str, ctx):
     pass
 
 def _using(command: str, ctx):

@@ -1,0 +1,41 @@
+Shorthand for minecraft commands using pre-set default variables and etc.
+
+
+
+
+
+
+
+
+
+#variable
+%functioncall
+$myntcommand
+
+// valid mynt shorthand commands:
+- $say
+- $summon
+- $tag
+- $mark
+- $particle
+
+// mynt conditions
+- if
+    - 
+
+// mynt keywords
+- start: schedules a function call
+    - [after] runs the function after a condition
+        - [int (s:seconds, t:ticks) | $functioncall]
+        - runs after a duration of time | appends current function to end of other func or event.
+
+- if: runs the code between if and end if a condition is met
+
+
+
+
+<type> #<varname>
+
+<funcname> {\n
+\t [body]
+} [after | if | $eventname]

@@ -6,6 +6,7 @@ import mynt.funchelper as fh
 import mynt.logging as lg
 import mynt.itemhelper as ih
 import sys
+from enum import Enum
 
 lgl = lg.Logger.log
 lgll = lg.LogLevel
@@ -15,6 +16,19 @@ TIMER_TAGS = ["name", "duration", "call"]
 VAR_TAGS = ["name", "type"]
 VAR_TYPES = ["zombie", "item", "bool", "number", "score"]
 EVENT_FILE = 'evt'
+
+class CTXType(Enum):
+    VARIABLE = 0,
+    FUNCTION = 1
+    TIMER = 2
+
+class MyntContext:
+    def __init__(self, obj, ctxType: CTXType):
+        self.ctx = {
+            "name": obj["name"],
+            "type": ctxType,
+            "data": obj
+        }
 
 class Mynt:
     def __init__(self, myntFile: ft.PackFile):
@@ -26,6 +40,9 @@ class Mynt:
         self.functions_c = []
         self.variables = []
         self.variables_c = []
+
+        self.loadedVariables = {}
+
         self.timers = []
         self.defaults = {}
         self.timer_c = []
@@ -419,6 +436,7 @@ class Mynt:
         tf.write(fh.ifScore(tfFuncs, timerName, f"{duration}.."))
 
         self.timer_c.append(self._timer_c(timerId, timerName, duration))
+
         varData = self._timer_c(timerId, timerName, duration)
         self.variables_c.append(self._variable_c(len(self.variables_c), timerName, 'timer', json.dumps(varData), varData))
         
@@ -447,6 +465,14 @@ class Mynt:
             lgl(level, f'\t{lst}')
 
     def compile(self):
+
+        # Process all the json components via the translater.
+        # Any callout that contains a mynt variable add to another list, then re-compile that list
+        # until there are no variables remaining.
+
+        # Each variable, function, and timer needs to have a context associate to pass to the translater.
+        # The context should contain the name of the variable created (or function name), the type of the variable 
+        # and any information such as indentation block.
         lgl(lgll.DEBUG, 'Compiling Mynt...')
         for v in self.variables:
             self._initVar(v)

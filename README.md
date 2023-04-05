@@ -51,7 +51,7 @@ functions = [
     holdClickToFire {
         $say @a Fire!
         $set #magictest 0
-        $start #test-timer2
+        $start #test-timer2 after 2s
     } if {
         $score @a #magictest >= 20
     },
@@ -62,23 +62,12 @@ functions = [
     sleepShout {
         $say @a somebody slept!
     } $sleep
-]
 
-timers = [
-    // Timers are scheduled events or events you want fired off after a 
-    //  delay. 
-    //  "name { body } <after | when | $EVENT> <time | condition>"
-    test-timer2 {
+    test-timer {
         $say $blue $bold @a Summoning stick used...
         $summon creeper
         $summon #GruntZombie at @a
-    } after 1s
-
-    // This timer is an example of all you would need to do in order to
-    //  detect if a player is sleeping or not.
-    sleepGhast {
-        $summon ghast
-    } $sleep 2s
+    }
 ]
 ```
 
