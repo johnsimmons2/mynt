@@ -1,0 +1,25 @@
+{
+  "name": "mynt",
+  "displayName": "mynt",
+  "description": "Mynt Language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.77.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "mynt",
+      "aliases": ["Mynt", "mynt"],
+      "extensions": [".mynt"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "mynt",
+      "scopeName": "source.mynt",
+      "path": "./syntaxes/mynt.tmLanguage.json"
+    }]
+  }
+}

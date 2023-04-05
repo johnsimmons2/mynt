@@ -1,14 +1,51 @@
 import re
 import json
 
+# CALLABLE -> FUNC | EVENT
+# FUNC -> 
+#   { EXPRESSION+ } 
+# | { EXPRESSION+ } after CALLABLE DURATION
+# | { EXPRESSION+ } when CALLABLE
+# | { EXPRESSION+ } 
+# EXPRESSION -> 
+#   if CONDITION STATEMENT
+# | if CONDITION STATEMENT else STATEMENT
+# | STATEMENT
+# { STATEMENT* }
+# \s
+# STATEMENT ->
+#   TYPE id = EXPRESSION
+# | run FUNC
+# | MYNTCMD
+# | TERM
+# TERM -> value of variable
+
 
 def tokenize_mfile_to_json(mfile):
     # define the format of the tokens
     tokens = {
-        "KEYWORD": ["functions", "load", "main", "@a", "@s", "set", "begin", "if", "score", "zombie", "entity"],
-        "ID": [r"\#([A-Za-z\-\_]+)(?:[0-9]*)"],
-        "CALLOUT": [r"\$([A-Za-z\-\_]+)(?:[0-9]*)"],
-        "NUMBER": ["[0-9]+"],
+        "COMMENT": [
+            r"\/[\/]+.*"
+        ],
+        "KEYWORD": [
+            "load", 
+            "main", 
+            "run", 
+            "delay", 
+            "if",
+            "else",
+            "after",
+            "when"
+            ],
+        "PRIMITIVE": [
+            "score",
+            "number",
+            "zombie"
+        ],
+        "ID": [r"\#([A-Za-z\-\_]+)([0-9]*)"],
+        "FUNCTION": [r"\$([A-Za-z\-\_]+)([0-9]*)(\s)+{"],
+        "CALLOUT": [r"\$([A-Za-z\-\_]+)([0-9]*)"],
+        "NUMBER": ["[0-9]+(st)?"],
         "SYMBOL": ["+", "-", "*", "/", "=", "<", ">", "(", ")", "{", "}", "\"", "..", "'"],
         # add more tokens as needed
     }
@@ -20,6 +57,12 @@ def tokenize_mfile_to_json(mfile):
             loops = 0   
             line_tokens = []
             while line and loops < 10:
+                mtch = re.match(re.compile(tokens["COMMENT"][0]), line)
+                if mtch:
+                    line_tokens.append(("COMMENT", mtch.group()))
+                    line = line[mtch.end():]
+                    break
+
                 # check for keywords
                 for keyword in tokens["KEYWORD"]:
                     if line.startswith(keyword):
