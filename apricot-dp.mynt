@@ -1,25 +1,26 @@
 
 // Variable type then a pound sign to denote variable.
-zombie #gruntzombie = {
+zombie gruntzombie = {
     "HandItems": [{"id":"minecraft:leather_helmet"}],
     "CustomName": "Grunt"
 } from './mobs/grunt.json'
 
 // Different mobs can pull from the same file
-zombie #buffzombie = {
+zombie buffzombie = {
     "HandItems": [{"id":"minecraft:diamond_axe"}],
     "CustomName": "Grunt"
 } from './mobs/grunt.json'
 
 // Pulls from assets to match name
-zombie #normalzombie
+zombie normalzombie
 
 // Pulls all data from both files into the variable.
 //  .json file format is implicit when using 'from.'
-zombie #bosszombie from '/mobs/grunt', '/mobs/boss'
+zombie bosszombie from '/mobs/grunt', '/mobs/boss'
 
 // Creates a score and adds each player to it defaulting the value to 0
-score #bosskills = 0
+score bosskills = 0
+important score rupees = 0
 
 // load and main are required
 load {
@@ -31,7 +32,7 @@ main {
 }
 
 // Define a custom function
-$myfunction {
+myfunction {
     // Executes a function after 3 seconds
     run $somefunction delay 3s
     // Executes a function immediately
@@ -40,7 +41,7 @@ $myfunction {
 }
 
 // Define a function that when called, waits 2s before running.
-$testfunction {
+testfunction {
     if expression {
 
     }
@@ -60,15 +61,15 @@ $testfunction {
 // Define a function that is always called after another function.
 //  When $myfunction is called, $myotherfunction runs after.
 //  Can still be called separately.
-$myotherfunction {
+myotherfunction {
 } after $myfunction
 
 // Compiles the expression and runs when condition is met.
 // This function can still be called separate of the condition.
-$functionname {
+functionname {
 } if expression
 
 // "when" binds a function to an event. The event name must be given and be valid.
-$funcname2 {
+funcname2 {
     // This code will run every time the event triggers that a player has slept.
 } when $event.player.sleep

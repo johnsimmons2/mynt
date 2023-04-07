@@ -35,18 +35,19 @@ def tokenize_mfile_to_json(mfile):
             "if",
             "else",
             "after",
-            "when"
+            "when",
+            "important",
+            "from"
             ],
         "PRIMITIVE": [
             "score",
             "number",
             "zombie"
         ],
-        "ID": [r"\#([A-Za-z\-\_]+)([0-9]*)"],
-        "FUNCTION": [r"\$([A-Za-z\-\_]+)([0-9]*)(\s)+{"],
-        "CALLOUT": [r"\$([A-Za-z\-\_]+)([0-9]*)"],
-        "NUMBER": ["[0-9]+(st)?"],
-        "SYMBOL": ["+", "-", "*", "/", "=", "<", ">", "(", ")", "{", "}", "\"", "..", "'"],
+        "STRING": [r"\"([A-Za-z\-\_\/\\]+)([0-9]*)\"", r"'([A-Za-z\-\_]+)([0-9]*)'"],
+        "ID": [r"([a-z\-\_]+)([0-9]*)"],
+        "NUMBER": ["[0-9]"],
+        "SYMBOL": ["+", "-", "*", "/", "=", "<", ">", "(", ")", "{", "}", "\"", ".", "'", ","],
         # add more tokens as needed
     }
     # tokenize the mfile
@@ -59,7 +60,6 @@ def tokenize_mfile_to_json(mfile):
             while line and loops < 10:
                 mtch = re.match(re.compile(tokens["COMMENT"][0]), line)
                 if mtch:
-                    line_tokens.append(("COMMENT", mtch.group()))
                     line = line[mtch.end():]
                     break
 
@@ -69,19 +69,26 @@ def tokenize_mfile_to_json(mfile):
                         line_tokens.append(("KEYWORD", keyword))
                         line = line[len(keyword):]
                         break
+
+                for keyword in tokens["PRIMITIVE"]:
+                    if line.startswith(keyword):
+                        line_tokens.append(("PRIMITIVE", keyword))
+                        line = line[len(keyword):]
+                        break
+
+                for regex in tokens["STRING"]:
+                    match = re.match(re.compile(regex), line)
+                    if match:
+                        print(match)
+                        line_tokens.append(("STRING", match.group()))
+                        line = line[match.end():]
+                        break
                 
                 # check for IDs
                 for regex in tokens["ID"]:
                     match = re.match(re.compile(regex), line)
                     if match:
                         line_tokens.append(("ID", match.group()))
-                        line = line[match.end():]
-                        break
-                
-                for regex in tokens["CALLOUT"]:
-                    match = re.match(re.compile(regex), line)
-                    if match:
-                        line_tokens.append(("CALLOUT", match.group()))
                         line = line[match.end():]
                         break
 
@@ -101,15 +108,23 @@ def tokenize_mfile_to_json(mfile):
                         break
 
                 # ignore whitespace
-                if line.startswith(" "):
+                if line.startswith("\n"):
+                    line = line[1:]
+                    line_tokens.append(("SYMBOL", "NWLN"))
+                elif line.startswith(" "):
+                    line = line[1:]
+                elif line.startswith(""):
+                    line_tokens.append(("SYMBOL", "EOL"))
                     line = line[1:]
                 # unrecognized character
                 else:
                     loops = loops + 1
                     continue
                         # raise Exception("Unrecognized character: " + line[0])
-            tokenized_file.append(line_tokens)
+            if len(line_tokens) > 0:
+                tokenized_file.append(line_tokens)
             f.write(str(line_tokens) + '\n')
+        tokenized_file.append([("SYMBOL", "EOF")])
         # convert the tokenized file to a JSON configuration
         configuration = {
             "keywords": list(set([token[1] for line in tokenized_file for token in line if token[0] == "KEYWORD"])),
@@ -123,7 +138,7 @@ def tokenize_mfile_to_json(mfile):
                 token[1] for i, l in enumerate(tokenized_file) for j, token in enumerate(l) if token[0] == "ID"])),
             "numbers": list(set([token[1] for line in tokenized_file for token in line if token[0] == "NUMBER"])),
             "symbols": list(set([token[1] for line in tokenized_file for token in line if token[0] == "SYMBOLS"])),
-            "ast": tokenized_file
+            "ast": [item for sublist in tokenized_file for item in sublist]
         }
     
     return configuration

@@ -24,7 +24,7 @@ def main():
 
     with open('./apricot-dp.mynt') as f:
         tokens = my.tk.tokenize_mfile_to_json(f.read())
-        print(tokens)
+        my.pa.parse(tokens["ast"])
 
 if __name__ == "__main__":
     main()

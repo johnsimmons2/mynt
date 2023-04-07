@@ -1,0 +1,76 @@
+
+<statement> ::= 
+            | <set_var>
+            | <import_stmt>
+            | <if_else_stmt>
+            | <if_stmt>
+
+<compare> ::= 
+
+<condition> ::= 
+            | <compare>
+            | "not" <inverted>
+
+<if_stmt> ::= 
+            | "if" <condition> <block_or_exp>
+
+<if_else_stmt> ::= 
+            | <if_stmt> "else" <block_or_exp>
+
+<block> ::= 
+            | "{" <statement>+ "}"
+
+<block_or_exp> ::= 
+            | <block> | <expression>
+
+<resource> ::= 
+            | ['A-Za-z0-9//\.] ".json'"
+
+<id> ::= 
+            | [a-z0-9]
+
+<str_literal> ::= 
+            | "([A-Za-z\-\_\s]+)([0-9]*)"
+
+<num_suffix> ::= 
+            | "s" | "t" | "f" | <null>
+
+<number_literal> ::= 
+            | ([0-9]*)(.?[0-9]*)?
+
+<number> ::= 
+            | <number_literal> <num_suffix>
+
+<type> ::= "score"
+            | "zombie"
+
+<set_important_var_from> ::=
+            | <set_var_from>
+            | "important" <set_var_from>
+
+<set_var_from> ::= 
+            | <set_var>
+            | <set_var> from <resource>+
+
+<set_var> ::= 
+            | <type> <id>
+            | <type> <id> "=" <block_or_exp>
+
+<null> ::= 
+            | ""
+
+<sum> ::= <sum> "+" <term>
+            | <sum> "-" <term>
+            | <term>
+
+<term> ::= <term> "*" <factor>
+            | <term> "*" <factor>
+            | <term> "/" <factor>
+            | <term> "%" <factor>
+            | <factor>
+
+<factor> ::= "+" <factor>
+            | "-" <factor>
+            | <power>
+
+<power> ::= 
