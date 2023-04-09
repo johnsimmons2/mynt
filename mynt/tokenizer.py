@@ -44,10 +44,11 @@ def tokenize_mfile_to_json(mfile):
             "number",
             "zombie"
         ],
-        "STRING": [r"\"([A-Za-z\-\_\/\\]+)([0-9]*)\"", r"'([A-Za-z\-\_]+)([0-9]*)'"],
-        "ID": [r"([a-z\-\_]+)([0-9]*)"],
+        "STRING": [r"\"([A-Za-z\-\_\/\\\.0-9]*)\"", r"'([A-Za-z\-\_\/\\\.0-9]*)'"],
+        # Needs to be lowercase after tokenized
+        "ID": [r"([A-Za-z\-\_]+)([0-9]*)"],
         "NUMBER": ["[0-9]"],
-        "SYMBOL": ["+", "-", "*", "/", "=", "<", ">", "(", ")", "{", "}", "\"", ".", "'", ","],
+        "SYMBOL": ["+", "-", "*", "/", "=", "<", ">", "(", ")", "{", "}", "\"", ".", "'", ",", "[", "]", ":"],
         # add more tokens as needed
     }
     # tokenize the mfile
@@ -79,7 +80,6 @@ def tokenize_mfile_to_json(mfile):
                 for regex in tokens["STRING"]:
                     match = re.match(re.compile(regex), line)
                     if match:
-                        print(match)
                         line_tokens.append(("STRING", match.group()))
                         line = line[match.end():]
                         break
@@ -113,7 +113,7 @@ def tokenize_mfile_to_json(mfile):
                     line_tokens.append(("SYMBOL", "NWLN"))
                 elif line.startswith(" "):
                     line = line[1:]
-                elif line.startswith(""):
+                elif line == "":
                     line_tokens.append(("SYMBOL", "EOL"))
                     line = line[1:]
                 # unrecognized character

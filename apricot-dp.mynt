@@ -1,28 +1,3 @@
-
-// Variable type then a pound sign to denote variable.
-zombie gruntzombie = {
-    "HandItems": [{"id":"minecraft:leather_helmet"}],
-    "CustomName": "Grunt"
-} from './mobs/grunt.json'
-
-// Different mobs can pull from the same file
-zombie buffzombie = {
-    "HandItems": [{"id":"minecraft:diamond_axe"}],
-    "CustomName": "Grunt"
-} from './mobs/grunt.json'
-
-// Pulls from assets to match name
-zombie normalzombie
-
-// Pulls all data from both files into the variable.
-//  .json file format is implicit when using 'from.'
-zombie bosszombie from '/mobs/grunt', '/mobs/boss'
-
-// Creates a score and adds each player to it defaulting the value to 0
-score bosskills = 0
-important score rupees = 0
-
-// load and main are required
 load {
     // Runs when load.mcfunction is called
 }
