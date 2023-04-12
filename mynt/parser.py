@@ -1,9 +1,26 @@
 import mynt.tokenizer
 import pyparsing as pp
 import mynt.logging as lg
+from enum import Enum
 
 lgl = lg.Logger.log
 lgll = lg.LogLevel
+
+
+class ASTNodeType(Enum):
+    ROOT = 0,
+    PROGRAM = 1,
+    STATEMENT = 2,
+    ASSIGNMENT_STATEMENT = 3,
+
+
+class ASTNode:
+    def __init__(self, typ: ASTNodeType):
+        self.type = typ
+        self._initFromType()
+
+    def _initFromType(self):
+        pass
 
 
 def parse(tokens):
@@ -207,6 +224,7 @@ class Parser:
         tree = []
         while self.peek():
             t = self.peek()
+            self._ctx = self._prevctx
             if t[0] == "COMMENT" or t[0] == "WHTSPC":
                 # Do not include in ast
                 continue
@@ -238,7 +256,8 @@ class Parser:
                 if t[1] == "EOL" or t[1] == "EOF":
                     self.consume()
                     continue
-            lgl(lgll.DEBUG, f"{t}, {self._ctx}")
-        print(tree)
+            if self._ctx != "root":
+                print("test")
+            print(tree)
         return tree
         
