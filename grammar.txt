@@ -1,76 +1,35 @@
+expression ::= <condition> | <condition> or <condition>
+condition ::= <cond> | <cond> and <cond>
+cond ::= <id> <op> <number> | <expression>
+definition ::= <var_definition> | <func_definition>
+func_definition ::= <id> <function>
+var_definition ::= <type> <id> <var_declaration> | important <type> <id> = <var_declaration>
+var_declaration ::= = <number> | = <json_block> | from <resource>
+number ::= [0-9]+
+type ::= score | zombie | pig | chicken | enderman | number
+function ::= { <statement>* }
+load ::= load <function>
+main ::= main <function>
+validProg ::= <main> <load> | <load> <main>
+program ::= <validProg> [<definition>*] | [<definition>*] <validProg> 
+string ::= (~[“] | ” [\b\t\n\f\r”‘])*
+resource ::= ([a-zA-Z]:)?((\/|\\)[a-zA-Z0-9\s_@\-^!#$%&+={}\[\]]+)*\.[a-zA-Z0-9]{1,6}
 
-<statement> ::= 
-            | <set_var>
-            | <import_stmt>
-            | <if_else_stmt>
-            | <if_stmt>
 
-<compare> ::= 
 
-<condition> ::= 
-            | <compare>
-            | "not" <inverted>
-
-<if_stmt> ::= 
-            | "if" <condition> <block_or_exp>
-
-<if_else_stmt> ::= 
-            | <if_stmt> "else" <block_or_exp>
-
-<block> ::= 
-            | "{" <statement>+ "}"
-
-<block_or_exp> ::= 
-            | <block> | <expression>
-
-<resource> ::= 
-            | ['A-Za-z0-9//\.] ".json'"
-
-<id> ::= 
-            | [a-z0-9]
-
-<str_literal> ::= 
-            | "([A-Za-z\-\_\s]+)([0-9]*)"
-
-<num_suffix> ::= 
-            | "s" | "t" | "f" | <null>
-
-<number_literal> ::= 
-            | ([0-9]*)(.?[0-9]*)?
-
-<number> ::= 
-            | <number_literal> <num_suffix>
-
-<type> ::= "score"
-            | "zombie"
-
-<set_important_var_from> ::=
-            | <set_var_from>
-            | "important" <set_var_from>
-
-<set_var_from> ::= 
-            | <set_var>
-            | <set_var> from <resource>+
-
-<set_var> ::= 
-            | <type> <id>
-            | <type> <id> "=" <block_or_exp>
-
-<null> ::= 
-            | ""
-
-<sum> ::= <sum> "+" <term>
-            | <sum> "-" <term>
-            | <term>
-
-<term> ::= <term> "*" <factor>
-            | <term> "*" <factor>
-            | <term> "/" <factor>
-            | <term> "%" <factor>
-            | <factor>
-
-<factor> ::= "+" <factor>
-            | "-" <factor>
-            | <power>
-
-<power> ::= 
+--- END EBNF ---
+What we have so far:
+- creates AST in parser for statements, expressions, mccommands, mynt commands
+- assign variable
+    - if it is a loadable type
+        - if no resource provided, try to get it from its name
+        - if resource provided with "from" keyword, load it from the file
+        - if the assignment is to a block, it is json, load it.
+    - otherwise it is a literal, so we assign it and add to the ast.
+- declare a function
+    - can have as many statements as you want
+    - can have mcfunctions
+    - can have the set up mynt commands
+    - can have if statements
+        - can have
+    - can have a neighbor, to attach to an event or another function

@@ -6,3 +6,4 @@ import mynt.translater as tl
 from mynt.mynter import Mynt
 import mynt.logging as lg
 import mynt.parser as pa
+import mynt.compiler as cp

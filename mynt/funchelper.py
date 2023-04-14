@@ -41,6 +41,9 @@ def ifItemByTagSelected(func, tag):
 def particle(type, pos='~ ~ ~', delta='0 0 0', speed=0.05, count=5):
     return f'particle {type} {pos} {delta} {speed} {count} force @a'
 
+def schedule(func, delay=0, units='t'):
+    return f'schedule function {func} {delay}{units}'
+
 # $tag
 def tag(type, tag, range):
     return f'tag @e[type={type},distance={range}] add {tag}'

@@ -19,12 +19,14 @@ import mynt as my
 def main():
     my.lg.Logger.config_set_handler(my.lg.FormattedLogHandler())
     
-    mynt = my.Mynt(my.ft.loadMyntFile())
-    mynt.compile()
+    # mynt = my.Mynt(my.ft.loadMyntFile())
+    # mynt.compile()
 
-    # with open('./apricot-dp.mynt') as f:
-    #     tokens = my.tk.tokenize_mfile_to_json(f.read())
-    #     my.pa.parse(tokens["ast"])
+    with open('./apricot-dp.mynt') as f:
+        tokens = my.tk.tokenize_mfile_to_json(f.read())
+        ast = my.pa.parse(tokens["ast"])
+        compiler = my.cp.Compiler(ast)
+        compiler.compile()
 
 if __name__ == "__main__":
     main()

@@ -1,50 +1,15 @@
-load {
-    // Runs when load.mcfunction is called
-}
-
 main {
-    // Runs every tick
+    if x == 10 {
+        tellraw @a {
+            "text": "I will now summon a chicken."
+        }
+        execute as @a at @s run summon chicken ~ ~ ~
+    }
 }
 
-// Define a custom function
-myfunction {
-    // Executes a function after 3 seconds
-    run $somefunction delay 3s
-    // Executes a function immediately
-    run $somefunction2
-
+load {
+    tellraw @a {
+        "text": "The datapack is loaded in!",
+        "color": "red"
+    }
 }
-
-// Define a function that when called, waits 2s before running.
-testfunction {
-    if expression {
-
-    }
-
-    if not expression {
-
-    }
-
-    // --- Shorthand for above
-    if expression {
-
-    } else {
-
-    }
-} after 2s
-
-// Define a function that is always called after another function.
-//  When $myfunction is called, $myotherfunction runs after.
-//  Can still be called separately.
-myotherfunction {
-} after $myfunction
-
-// Compiles the expression and runs when condition is met.
-// This function can still be called separate of the condition.
-functionname {
-} if expression
-
-// "when" binds a function to an event. The event name must be given and be valid.
-funcname2 {
-    // This code will run every time the event triggers that a player has slept.
-} when $event.player.sleep

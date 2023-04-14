@@ -37,18 +37,20 @@ def tokenize_mfile_to_json(mfile):
             "after",
             "when",
             "important",
-            "from"
+            "from",
+            "and",
+            "or"
             ],
         "PRIMITIVE": [
             "score",
             "number",
             "zombie"
         ],
-        "STRING": [r"\"([A-Za-z\-\_\/\\\.0-9]*)\"", r"'([A-Za-z\-\_\/\\\.0-9]*)'"],
+        "STRING": [r"\"([A-Za-z\-\_\/\\\.\s0-9!@#$%^&*()=:]*)\"", r"\'([A-Za-z\-\_\/\\\.\s0-9!@#$%^&*()=:]*)\'"],
         # Needs to be lowercase after tokenized
-        "ID": [r"([A-Za-z\-\_]+)([0-9]*)"],
-        "NUMBER": ["[0-9]"],
-        "SYMBOL": ["+", "-", "*", "/", "=", "<", ">", "(", ")", "{", "}", "\"", ".", "'", ",", "[", "]", ":"],
+        "ID": [r"([A-Za-z\-\_]+)([0-9]*)", r"\$([A-Za-z\-\_]+)([0-9]*)"],
+        "NUMBER": ["[0-9]+(\.[0-9]+)?[st]?"],
+        "SYMBOL": ["@a", "@e", "@p", "@s", "+", "-", "*", "/", "<", ">", "(", ")", "{", "}", "\"", ".", "'", ",", "[", "]", ":", "**", "==", "=", "~"],
         # add more tokens as needed
     }
     # tokenize the mfile
