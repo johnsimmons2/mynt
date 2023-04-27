@@ -1,0 +1,41 @@
+{
+    "functions": {
+        "anonymous0": {
+            "body": [
+                "tellraw @a {\"text\": \"I will now summon a chicken.\"}",
+                "execute as @a at @s run summon chicken ~ ~ ~"
+            ]
+        }
+    },
+    "variables": [
+        {
+            "name": "killCount",
+            "type": "score",
+            "data": {
+                "trigger": "playerKillCount",
+                "display": "sidebar"
+            }
+        },
+        {
+            "name": "x",
+            "type": "number",
+            "data": 10.0
+        },
+        {
+            "name": "deaths",
+            "type": "score",
+            "data": "minecraft:deathCount"
+        },
+        {
+            "name": "y",
+            "type": "number",
+            "data": 11.0
+        }
+    ],
+    "main": [
+        null
+    ],
+    "load": [
+        "tellraw @a {\"text\": \"The datapack is loaded in!\", \"color\": \"red\"}"
+    ]
+}

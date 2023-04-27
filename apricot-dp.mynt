@@ -1,5 +1,14 @@
+score killCount = {
+    "trigger": "playerKillCount",
+    "display": "sidebar"
+}
+
+important score deaths $minecraft:deathCount
+number x = 10
+number y = 11
+
 main {
-    if x == 10 {
+    if x == 4 or y == 11 {
         tellraw @a {
             "text": "I will now summon a chicken."
         }

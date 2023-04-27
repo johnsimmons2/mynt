@@ -48,9 +48,9 @@ def tokenize_mfile_to_json(mfile):
         ],
         "STRING": [r"\"([A-Za-z\-\_\/\\\.\s0-9!@#$%^&*()=:]*)\"", r"\'([A-Za-z\-\_\/\\\.\s0-9!@#$%^&*()=:]*)\'"],
         # Needs to be lowercase after tokenized
-        "ID": [r"([A-Za-z\-\_]+)([0-9]*)", r"\$([A-Za-z\-\_]+)([0-9]*)"],
+        "ID": [r"([A-Za-z\-\_]+)([0-9]*)", r"\$([A-Za-z\-\_]+)([0-9]*)(:?)([A-Za-z\-\_]+)([0-9]*)"],
         "NUMBER": ["[0-9]+(\.[0-9]+)?[st]?"],
-        "SYMBOL": ["@a", "@e", "@p", "@s", "+", "-", "*", "/", "<", ">", "(", ")", "{", "}", "\"", ".", "'", ",", "[", "]", ":", "**", "==", "=", "~"],
+        "SYMBOL": ["@a", "@e", "@p", "@s", "+", "-", "*", "/", "<", ">", "(", ")", "{", "}", "\"", ".", "'", ",", "[", "]", ":", "**", "==", "=", "~", "!="],
         # add more tokens as needed
     }
     # tokenize the mfile
@@ -140,7 +140,7 @@ def tokenize_mfile_to_json(mfile):
                 token[1] for i, l in enumerate(tokenized_file) for j, token in enumerate(l) if token[0] == "ID"])),
             "numbers": list(set([token[1] for line in tokenized_file for token in line if token[0] == "NUMBER"])),
             "symbols": list(set([token[1] for line in tokenized_file for token in line if token[0] == "SYMBOLS"])),
-            "ast": [item for sublist in tokenized_file for item in sublist]
+            "tokens": [item for sublist in tokenized_file for item in sublist]
         }
     
     return configuration

@@ -1,17 +1,27 @@
+program ::= <validProg> [<definition>*] | [<definition>*] <validProg> 
+validProg ::= <main> <load> | <load> <main>
+
+statement ::= <mcstatement> | <if> | <mynt_statement>
 expression ::= <condition> | <condition> or <condition>
+
 condition ::= <cond> | <cond> and <cond>
 cond ::= <id> <op> <number> | <expression>
-definition ::= <var_definition> | <func_definition>
+
+loadfunc ::= from <resource>
+
+definition ::= <var_definition> | <func_definition> | <load_func>
 func_definition ::= <id> <function>
-var_definition ::= <type> <id> <var_declaration> | important <type> <id> = <var_declaration>
-var_declaration ::= = <number> | = <json_block> | from <resource>
-number ::= [0-9]+
-type ::= score | zombie | pig | chicken | enderman | number
+var_definition ::= <type> <id> <var_declaration> | important <type> <id> <var_declaration>
+var_declaration ::= = <number> | = <json_block> | from <resource> | <event>
+event ::= $<event_name>
+event_name ::= deathCount | playerKillCount
+
 function ::= { <statement>* }
 load ::= load <function>
 main ::= main <function>
-validProg ::= <main> <load> | <load> <main>
-program ::= <validProg> [<definition>*] | [<definition>*] <validProg> 
+
+number ::= [0-9]+
+type ::= score | zombie | pig | chicken | enderman | number
 string ::= (~[“] | ” [\b\t\n\f\r”‘])*
 resource ::= ([a-zA-Z]:)?((\/|\\)[a-zA-Z0-9\s_@\-^!#$%&+={}\[\]]+)*\.[a-zA-Z0-9]{1,6}
 

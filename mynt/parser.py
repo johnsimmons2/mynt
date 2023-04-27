@@ -7,6 +7,15 @@ from enum import Enum
 lgl = lg.Logger.log
 lgll = lg.LogLevel
 
+VALID_IF_PARAMETERS = [
+    "and",
+    "or",
+    "nand",
+    "nor",
+    "xor",
+    "xnor",
+]
+
 KEYWORDS = [
             "load", 
             "main", 
@@ -63,7 +72,9 @@ class ASTNode:
         elif isinstance(self, ExpressionNode):
             result = result + f"({self.left}, {self.operator}, {self.right})"
             result = result + ")"
+        # -- DO NOT DELETE --
         print(result)
+        # -------------------
         for child in self.__dict__:
             if child == "parent":
                 continue
@@ -149,6 +160,7 @@ class ProgramNode(ASTNode):
     def __init__(self, parent = None):
         super().__init__(ASTNodeType.PROGRAM, parent)
         self.statements = []
+        self.filename = None
 
 class FunctionNode(BlockNode):
     def __init__(self, parent = None):
@@ -165,9 +177,10 @@ class AssignmentNode(ASTNode):
         self.variable = None
         self.assignment = None
         self.important = False
+        self.varType = None
 
 def parse(tokens):
-    return Parser(tokens).start()
+    return Parser(tokens["tokens"]).start()
 
 class MyntError(SyntaxError):
     def __init__(self, *args):
@@ -177,6 +190,7 @@ class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.position = 0
+        self.anonymousId = 0
         self._ctx = "root"
         self._prevctx = "root"
         self.ast = {}
@@ -320,6 +334,7 @@ class Parser:
                     lgl(lgll.DEBUG, f"IF STATEMENT: {self.position}")
                     statement = self._node(ASTNodeType.IF_STATEMENT)
                     expr = self._expression()
+                    expr.parent = statement
                     statement.condition = expr
                     statement.then = self._block()
                     if self.peek()[1] == "else":
@@ -374,7 +389,7 @@ class Parser:
         else:
             node = self._node(ASTNodeType.FUNCTION)
             if token[1] == "{":
-                node.name = "anonymous"
+                node.name = f"anonymous{self.anonymousId}"
             else:
                 node.name = token[1]
                 token = self.consume()
@@ -411,16 +426,24 @@ class Parser:
     def _expression(self):
         node = self._node(ASTNodeType.EXPRESSION)
         tok = self.consume()
-        node.left = self._atom(tok)
-        if self.peek()[1] in ["+", "*", "-", "/", "**", "<", ">", "<=", ">=", "==", "and", "or"]:
+        atom = self._atom(tok)
+        node.left = atom
+        atom.parent = node
+        if self.peek()[1] in ["+", "*", "-", "/", "**", "<", ">", "<=", ">=", "==", "!="]:
             tok = self.consume()
             node.operator = tok[1]
-            node.right = self._expression()
-        elif self.peek()[1] == "{":
-            return node
-        else:
-            if self.peek()[1] != "EOL":
-                raise MyntError(f"Unknown expression syntax: {tok}, {node.left}, {self.peek()}")
+            expNode = self._expression()
+            node.right = expNode
+            expNode.parent = node
+        elif self.peek()[1] in VALID_IF_PARAMETERS:
+            node.operator = self.consume()[1]
+            expNode = self._expression()
+            node.right = expNode
+            expNode.parent = node
+        elif self.peek()[1] != "{" and self.peek()[1] != "EOL":
+            raise MyntError(f"Unknown expression syntax: {tok}, {node.left}, {self.peek()}")
+        if node.operator == None:
+            return node.left
         return node
 
     def _blockOrExp(self, assignment = False):
@@ -447,31 +470,43 @@ class Parser:
             return True
         return False
 
+    # Check if it is a resource (does not start with dollar sign)
+    # If it is a resource, grab the correct path.
+    # If it is not a resource, check if it starts with "minecraft:""
     def _getResourceFromName(self, name):
-        return "dummy/resource/test.json"
+        if name[0] != "$":
+            return f"assets/{name}.json"
+        else:
+            if "minecraft:" in name[1:]:
+                return name[1:]
+            else:
+                return name
     
     def _getNameFromResource(self, resource):
         return 'test-name'
 
     def _loadFromName(self, name):
         node = self._node(ASTNodeType.RESOURCE)
-        node["left"] = name
-        node["right"] = self._getResourceFromName(name)
+        assert isinstance(node, ResourceNode)
+        node.name = name
+        node.resource = self._getResourceFromName(name)
         return node
 
     def _loadFromResource(self, resource):
         node = self._node("RESOURCE")
-        node["left"] = self._getNameFromResource(resource)
-        node["right"] = resource
+        node.name = self._getNameFromResource(resource)
+        node.resource = resource
         return node
     
     def _assignmentStatement(self, important=False):
-        isLoadableType = self._isLoadableType(self.peek()[1])
+        assignmentType = self.peek()[1]
+        isLoadableType = self._isLoadableType(assignmentType)
         self.consume()
         token = self.consume()
         varType = token[0]
 
         node = self._node(ASTNodeType.ASSIGNMENT_STATEMENT)
+        node.varType = assignmentType
         self._prevctx = self._ctx
         self._ctx = self._ctx + f".assignment.{token[1]}"
 
@@ -480,8 +515,8 @@ class Parser:
 
         nextToken = self.peek()
         # Make sure the sequence is the correct grammar for this statement.
-        if nextToken[1] not in ["=", "EOL", "EOF", "from"]:
-            raise MyntError(f"Unexpected Symbol {self.peek()}. Expected declaration or assignment.")
+        if nextToken[1] not in ["=", "EOL", "EOF", "from"] and nextToken[1][1] == "$":
+            raise MyntError(f"Important val: {important}, Unexpected Symbol {self.peek()}. Expected declaration or assignment.")
 
         # Todo: finish
         node.variable = token[1]
@@ -510,12 +545,17 @@ class Parser:
                     else:
                         raise MyntError(f"Unexpected symbol {nextToken[1]} after equal sign.")
                 elif nextToken[0] == "STRING":
-                    node["right"] = self._loadFromResource(nextToken[1])
+                    node.assignment = self._loadFromResource(nextToken[1])
+                    self.consume()
+                elif nextToken[0] == "ID":
+                    node.assignment = self._loadFromName(nextToken[1])
                     self.consume()
                 else:
-                    node["right"] = self._expression()
+                    node.assignment = self._expression()
+            elif token[0] == "ID":
+               node.assignment = self._loadFromName(token[1])
             else:
-                raise MyntError(f"Unexpected end of statement with unknown symbol {token[1]}")
+                raise MyntError(f"Unexpected end of statement with unknown symbol {token}")
         else:
             lgl(lgll.DEBUG, f"NOT_LOADABLE_TYPE\t{self._ctx}")
             if token[1] == "=":
